@@ -39,7 +39,7 @@ def delete_phone_record(user_data=None) -> list:
 
 
 # Загальна функція для пошуку записів по імені або номеру.
-# Використовується для роботи функцій з пошуку або зміни запису
+# Використовується для роботи функцій з пошуку або редагування запису
 def find_records(user_data, true_false_result=False) -> list:
 
     matches_list = []
