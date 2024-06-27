@@ -146,13 +146,13 @@ def input_error(func) -> list:
                             if command == "add": 
                                 if find_records((result[1],), True):
                                     # - якщо ім'я існує, то повідомляємо це користувачу
-                                    return ("add", False)
+                                    return (command, False)
                             elif command == "change":
                                 # ...шукаємо що редагувати
                                 what_to_edit = find_records(result[1:])
                                 if what_to_edit == False:
                                     # Якщо не знаходимо запис для редагування - повідомляємо про помилку
-                                    return ("change", False)
+                                    return (command, False)
                                 else:
                                     result.append(what_to_edit[0])
 
