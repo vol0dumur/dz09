@@ -40,7 +40,7 @@ def delete_phone_record(user_data=None) -> list:
 
 # Загальна функція для пошуку записів по імені або номеру.
 # Використовується для роботи функцій з пошуку або редагування запису
-def find_records(user_data, true_false_result=False) -> list:
+def find_records(user_data, true_false_result=False) -> list | bool:
 
     matches_list = []
     is_phone = False
@@ -49,17 +49,21 @@ def find_records(user_data, true_false_result=False) -> list:
         user_data[1] = reset_phone_format(user_data[1])
     else:
 
+        # Якщо переданий у функцію параметр є номером телефону...
         if len(reset_phone_format(user_data[0])) == 12:
 
             user_data[0] = reset_phone_format(user_data[0])
+            # ...то далі нам треба буде шукати в довіднику серед номерів
             is_phone = True
 
     j = user_data[0]
 
     for key, value in phones.items():
         if is_phone:
-            i = value
+            # шукаємо серед номерів
+            i = value 
         else:
+            # шукаємо серед імен
             i = key
         if str(i).lower() == str(j).lower():
             matches_list.append(key)
@@ -97,7 +101,7 @@ def greetings(message) -> str:
     return result
 
 
-# Декоратор, який обробляє усі помилки вводу користувача
+# Декоратор який обробляє усі помилки вводу користувача
 def input_error(func) -> list:
 
     def inner(user_input):
@@ -120,7 +124,7 @@ def input_error(func) -> list:
 
             else:
 
-                # Кількість очікуваних параметрів беремо зі словника
+                # Очікувану кількість параметрів беремо зі словника
                 number_of_expected_parameters = commands[command][1]
 
                 if len(result) < number_of_expected_parameters:
@@ -131,7 +135,7 @@ def input_error(func) -> list:
 
                 else:
 
-                    # Якщо кількість очікуваних параметрів = 3, то треба перевірити введений користувачем номер телефону
+                    # Якщо очікувана кількість параметрів = 3, то треба перевірити введений користувачем номер телефону
                     if number_of_expected_parameters == 3:
 
                         if len(reset_phone_format(result[2])) != 12:
@@ -142,18 +146,19 @@ def input_error(func) -> list:
                         # Якщо кількість введених параметрів правильна...
                         else:
 
-                            # ...перевіряємо, чи існує вже таке ім'я користувача -
+                            # ...і користувач хоче додати запис - перевіряємо, чи існує вже таке ім'я користувача -
                             if command == "add": 
                                 if find_records((result[1],), True):
-                                    # - якщо ім'я існує, то повідомляємо це користувачу
+                                    # - якщо ім'я існує, то повертаємо парамери в основну функцію, яка повідомить користувачу про це
                                     return (command, False)
                             elif command == "change":
-                                # ...шукаємо що редагувати
+                                # ...і користувач хоче редагувати запис - шукаємо по імені що редагувати
                                 what_to_edit = find_records(result[1:])
                                 if what_to_edit == False:
-                                    # Якщо не знаходимо запис для редагування - повідомляємо про помилку
+                                    # Якщо не знаходимо запис для редагування - повертаємо парамери в основну функцію, яка повідомить користувачу
                                     return (command, False)
                                 else:
+                                    # Інакше додаємо параметри в список параметрів
                                     result.append(what_to_edit[0])
 
                     command_handler = get_command_handler(command)
