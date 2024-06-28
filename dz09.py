@@ -111,7 +111,7 @@ def input_error(func) -> list:
         number_of_user_parameters = len(result)
 
         if number_of_user_parameters == 0:
-            return (False, None, 0)
+            return (False, "", 0)
         
         else:
             
@@ -287,7 +287,7 @@ def main() -> None:
     phones = read_from_file()
 
     errors = (
-        "Empty input! Check your data.",
+        "Empty input! Check your data.user_data_1",
         f"'user_data_1' is not recognized as an internal command.\nType 'help' for help.",
         f"Received command 'user_data_1'. Too few parameters. Check your data.",
         f"Received command 'user_data_1'. Too many parameters. Check your data.",
