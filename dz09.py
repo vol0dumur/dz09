@@ -79,7 +79,7 @@ def find_phone_record(user_data=None) -> list:
     result = find_records(user_data[1:])
 
     if result == False:
-
+        
         print("No records found.")
 
     else:
@@ -112,7 +112,8 @@ def input_error(func) -> list:
 
         if number_of_user_parameters == 0:
 
-            print("Empty input! Check your data.")
+            # print("Empty input! Check your data.")
+            return (False, None, 0)
         
         else:
             
@@ -120,7 +121,8 @@ def input_error(func) -> list:
             command = result[0]
 
             if command not in commands:
-                print(f"'{command}' is not recognized as an internal command.\nType 'help' for help.")
+                return (False, command, 1)
+                # print(f"'{command}' is not recognized as an internal command.\nType 'help' for help.")
 
             else:
 
@@ -128,10 +130,12 @@ def input_error(func) -> list:
                 number_of_expected_parameters = commands[command][1]
 
                 if len(result) < number_of_expected_parameters:
-                    print(f"Received command '{command}'. Too few parameters. Check your data.")
+                    return (False, command, 2)
+                    # print(f"Received command '{command}'. Too few parameters. Check your data.")
 
                 elif len(result) > number_of_expected_parameters:
-                    print(f"Received command '{command}'. Too many parameters. Check your data.")
+                    return (False, command, 3)
+                    # print(f"Received command '{command}'. Too many parameters. Check your data.")
 
                 else:
 
@@ -140,8 +144,9 @@ def input_error(func) -> list:
 
                         if len(reset_phone_format(result[2])) != 12:
 
-                            print(f"'{result[2]}' is an incorrect phone number. It must contain 12 digits.\nCheck your data and repeat.")
-                            return None
+                            return (False, result[2], 4)
+                            # print(f"'{result[2]}' is an incorrect phone number. It must contain 12 digits.\nCheck your data and repeat.")
+                            # return None
 
                         # Якщо кількість введених параметрів правильна...
                         else:
@@ -288,6 +293,14 @@ def main() -> None:
     path_to_dic = "phones.txt"
     phones = read_from_file()
 
+    errors = (
+        "Empty input! Check your data.",
+        f"'user_data_1' is not recognized as an internal command.\nType 'help' for help.",
+        f"Received command 'user_data_1'. Too few parameters. Check your data.",
+        f"Received command 'user_data_1'. Too many parameters. Check your data.",
+        f"'user_data_1' is an incorrect phone number. It must contain 12 digits.\nCheck your data and repeat."
+    )
+
     # Вічний цикл очікування на команду користувача
     while True:
 
@@ -298,6 +311,9 @@ def main() -> None:
 
         if len(phones) == 0:
             print("Add at least 1 record before continue using bot.")
+
+        if user_data[0] == False:
+            print(errors[user_data[2]].replace("user_data_1", user_data[1]))
 
         if user_data:
 
@@ -342,7 +358,6 @@ commands = {
     "quit": (quit_bot, 1),
     ".": (quit_bot, 1)
 }
-
 
 if __name__ == "__main__":
     main()
