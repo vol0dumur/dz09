@@ -111,8 +111,6 @@ def input_error(func) -> list:
         number_of_user_parameters = len(result)
 
         if number_of_user_parameters == 0:
-
-            # print("Empty input! Check your data.")
             return (False, None, 0)
         
         else:
@@ -122,7 +120,6 @@ def input_error(func) -> list:
 
             if command not in commands:
                 return (False, command, 1)
-                # print(f"'{command}' is not recognized as an internal command.\nType 'help' for help.")
 
             else:
 
@@ -131,11 +128,9 @@ def input_error(func) -> list:
 
                 if len(result) < number_of_expected_parameters:
                     return (False, command, 2)
-                    # print(f"Received command '{command}'. Too few parameters. Check your data.")
 
                 elif len(result) > number_of_expected_parameters:
                     return (False, command, 3)
-                    # print(f"Received command '{command}'. Too many parameters. Check your data.")
 
                 else:
 
@@ -145,8 +140,6 @@ def input_error(func) -> list:
                         if len(reset_phone_format(result[2])) != 12:
 
                             return (False, result[2], 4)
-                            # print(f"'{result[2]}' is an incorrect phone number. It must contain 12 digits.\nCheck your data and repeat.")
-                            # return None
 
                         # Якщо кількість введених параметрів правильна...
                         else:
