@@ -23,6 +23,11 @@ class TooMuchParameters(Exception):
         self.message = message
 
 
+class UserNameError(Exception):
+    def __init__(self, message=None):
+        self.message = message
+
+
 class WrongPhone(Exception):
     def __init__(self, message=None):
         self.message = message
@@ -33,31 +38,13 @@ class WrongRecordNumber(Exception):
         self.message = message
 
 
-def check_params(user_data) -> bool:
-    
-    number_of_expected_parameters = commands[user_data[0]][1]
-
-    if len(user_data) > number_of_expected_parameters:
-        raise TooMuchParameters
-    elif len(user_data) <= number_of_expected_parameters - 1:
-        raise TooLessParameters
-    
-    if len(user_data) == 3:
-        if len(reset_phone_format(user_data[2])) != 12:
-            raise WrongPhone
-        
-    if user_data[0] == "add": 
-        if find_records((user_data[1],), True):
-            # Якщо ім'я існує, то повертаємо виключення в основну функцію, яка повідомить користувачу про помилку введення
-            raise RecordAlreadyExists
-
-    return True
-
-
 def add_phone_record(user_data=None) -> list:
 
     if not check_params(user_data):
         return (False, user_data[0], user_data[1])
+
+    if len(sub(r"[0-9]", "", user_data[1])) == 0:
+        raise UserNameError
     
     write_to_file("a", user_data[1:])
 
@@ -78,6 +65,26 @@ def change_phone_record(user_data=None) -> list:
     write_to_file("w", phones)
 
     return (user_data[1].capitalize(), user_data[2])
+
+
+def check_params(user_data) -> bool:
+    
+    number_of_expected_parameters = commands[user_data[0]][1]
+
+    if len(user_data) > number_of_expected_parameters:
+        raise TooMuchParameters
+    elif len(user_data) <= number_of_expected_parameters - 1:
+        raise TooLessParameters
+    
+    if len(user_data) == 3:
+        if len(reset_phone_format(user_data[2])) != 12:
+            raise WrongPhone
+        
+    if user_data[0] == "add" and find_records((user_data[1],), True): 
+        # Якщо ім'я існує, то повертаємо виняток в основну функцію, яка повідомить користувачу про помилку введення
+        raise RecordAlreadyExists
+
+    return True
 
 
 def delete_phone_record(user_data=None) -> list:
@@ -144,15 +151,7 @@ def find_phone_record(user_data=None) -> list:
     result = find_records(user_data[1:])
 
     if result == False:
-        
-        print("No records found.")
-        return (None,)
-
-    else:
-
-        print(f"Records found:")
-        for num, item in enumerate(result):
-            print(f"{str(num) + '.':<3} {item:<10} {restore_phone_format(phones[item])}")
+        return (False, None)
     
     return result
 
@@ -188,25 +187,107 @@ def input_error(func) -> list:
         
         else:
             return (True, command, *command_result)
-        
-        finally:
-
-            if command_result == False:
-                print(f"command {command} returned bad result")
-                command_result = (False, False)
-            elif command_result == None:
-                print(f"command {command} returned bad result")
-                command_result = (True, None)
-
-        return command_result
     
     return inner
 
 
-def quit_bot(user_data=None) -> None:
+def main() -> None:
+    
+    global path_to_dic
+    global phones
 
-    print("\nGood bye!\n")
-    quit()
+    msg = "Hello "
+    path_to_dic = "phones.txt"
+    phones = read_from_file()
+
+    errors = (
+        f"Empty input!user_data", 
+        f"'user_data' is not recognized as an internal command.",
+        f"Received command 'user_data'. Too few parameters.",
+        f"Received command 'user_data'. Too many parameters.",
+        f"'user_data' is an incorrect phone number. It must contain 12 digits.",
+        f"Name 'user_data' already exists!",
+        f"Cannot delete record. Number 'user_data' is out of range.",
+        f"Phone list is empty!user_data",
+        f"Username must not consist exclusively of numbers ('user_data')!"
+    )
+
+    # Вічний цикл очікування на команду користувача
+    while True:
+
+        user_input = greetings(msg)
+        msg = ""
+
+        user_data = parse_user_input(user_input)
+
+        if len(phones) == 0:
+            print("Add at least 1 record before continue using bot.")
+
+        # Обробляємо неуспішне виконання функції
+        if user_data[0] == False:
+
+            match user_data[1]:
+
+                case "IndexError":
+                    print(errors[0].replace("user_data", ""))
+
+                case "KeyError":
+                    print(errors[1].replace("user_data", user_data[2]))
+
+                case "TooLessParameters":
+                    print(errors[2].replace("user_data", user_data[2]))
+
+                case "TooMuchParameters":
+                    print(errors[3].replace("user_data", user_data[2]))
+
+                case "WrongPhone":
+                    print(errors[4].replace("user_data", user_data[4]))
+
+                case "RecordAlreadyExists":
+                    print(errors[5].replace("user_data", user_data[3]))
+
+                case "WrongRecordNumber":
+                    print(errors[6].replace("user_data", user_data[3]))
+
+                case "PhoneListIsEmpty":
+                    print(errors[7].replace("user_data", ""))
+
+                case "UserNameError":
+                    print(errors[8].replace("user_data", user_data[3]))
+
+            print("Check your data and repeat or type 'help' for help.")
+        
+        # Обробляємо успішне виконання функції
+        elif user_data[0] == True:
+
+            match user_data[1]:
+
+                case "hello":
+                    msg = user_data[2]
+
+                case "delete":
+                    print(f"Record ({user_data[2]}, {restore_phone_format(user_data[3])}) was successfully deleted.")
+
+                case "add":
+                    phones.update({user_data[2].capitalize(): reset_phone_format(user_data[3])})
+                    print(f"Record ({user_data[2]}, {restore_phone_format(user_data[3])}) was successfully added.")
+
+                case "showall":
+                    print(f"\nA total of {user_data[2]} records were shown.")
+
+                case "change":
+                    print(f"Record ({user_data[2]}, {restore_phone_format(user_data[3])}) was successfully changed.")
+
+                case "phone":
+
+                    if user_data[2] == False:
+                        print(f"No records found.")
+
+                    else:
+                        
+                        print(f"Records found:")
+                        for num, item in enumerate(user_data[2:]):
+                            print(f"{str(num) + '.':<3} {item:<10} {restore_phone_format(phones[item])}")
 
 
 @input_error
@@ -216,6 +297,12 @@ def parse_user_input(user_input) -> list:
         user_input = user_input.split()
 
     return user_input
+
+
+def quit_bot(user_data=None) -> None:
+
+    print("\nGood bye!\n")
+    quit()
 
 
 def read_from_file() -> dict:
@@ -306,93 +393,6 @@ def write_to_file(mode, data_to_write) -> bool:
             return False
 
     return True
-
-
-def main() -> None:
-    
-    global path_to_dic
-    global phones
-
-    msg = "Hello "
-    path_to_dic = "phones.txt"
-    phones = read_from_file()
-
-    errors = (
-        "Empty input!user_data", 
-        f"'user_data' is not recognized as an internal command.",
-        f"Received command 'user_data'. Too few parameters.",
-        f"Received command 'user_data'. Too many parameters.",
-        f"'user_data' is an incorrect phone number. It must contain 12 digits.",
-        f"Name 'user_data' already exists!",
-        f"Cannot delete record. Number 'user_data' is out of range.",
-        "Phone list is empty!user_data"
-    )
-
-    # Вічний цикл очікування на команду користувача
-    while True:
-
-        user_input = greetings(msg)
-        msg = ""
-
-        user_data = parse_user_input(user_input)
-
-        if len(phones) == 0:
-            print("Add at least 1 record before continue using bot.")
-
-        # Обробляємо неуспішне виконання функції
-        if user_data[0] == False:
-
-            match user_data[1]:
-
-                case "IndexError":
-                    print(errors[0].replace("user_data", ""))
-
-                case "KeyError":
-                    print(errors[1].replace("user_data", user_data[2]))
-
-                case "TooLessParameters":
-                    print(errors[2].replace("user_data", user_data[2]))
-
-                case "TooMuchParameters":
-                    print(errors[3].replace("user_data", user_data[2]))
-
-                case "WrongPhone":
-                    print(errors[4].replace("user_data", user_data[4]))
-
-                case "RecordAlreadyExists":
-                    print(errors[5].replace("user_data", user_data[3]))
-
-                case "WrongRecordNumber":
-                    print(errors[6].replace("user_data", user_data[3]))
-
-                case "PhoneListIsEmpty":
-                    print(errors[7].replace("user_data", ""))
-
-                case False:
-                    print("Common error.")
-
-            print("Check your data and repeat or type 'help' for help.")
-        
-        # Обробляємо успішне виконання функції
-        elif user_data[0] == True:
-
-            match user_data[1]:
-
-                case "hello":
-                    msg = user_data[2]
-
-                case "delete":
-                    print(f"Record ({user_data[2]}, {restore_phone_format(user_data[3])}) was successfully deleted.")
-
-                case "add":
-                    phones.update({user_data[2].capitalize(): reset_phone_format(user_data[3])})
-                    print(f"Record ({user_data[2]}, {restore_phone_format(user_data[3])}) was successfully added.")
-
-                case "showall":
-                    print(f"\nA total of {user_data[2]} records were shown.")
-
-                case "change":
-                    print(f"Record ({user_data[2]}, {restore_phone_format(user_data[3])}) was successfully changed.")
 
 
 # Цифра після назви функції - кількість параметрів, які приймає ця функція
