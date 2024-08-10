@@ -3,42 +3,6 @@
 from re import sub
 
 
-# Загальна функція для пошуку записів по імені або номеру.
-# Використовується для роботи функцій з пошуку або редагування запису
-def find_records(user_data, true_false_result=False) -> list | bool:
-
-    matches_list = []
-    is_phone = False
-
-    if len(user_data) == 2:
-        user_data[1] = reset_phone_format(user_data[1])
-    else:
-
-        # Якщо переданий у функцію параметр є номером телефону...
-        if len(reset_phone_format(user_data[0])) == 12:
-
-            user_data[0] = reset_phone_format(user_data[0])
-            # ...то далі нам треба буде шукати в довіднику серед номерів
-            is_phone = True
-
-    j = user_data[0]
-
-    for key, value in phones.items():
-        if is_phone:
-            # шукаємо серед номерів
-            i = value
-        else:
-            # шукаємо серед імен
-            i = key
-        if str(i).lower() == str(j).lower():
-            matches_list.append(f"{key:<10} {restore_phone_format(value)}")
-
-    if len(matches_list) == 0:
-        return False
-    else:
-        return true_false_result or matches_list
-
-
 def input_error(func):
 
     def inner(user_data):
@@ -128,6 +92,42 @@ def delete_phone_record(user_data=None) -> list:
     
     else:
         raise TypeError("WrongRecordNumber")
+    
+
+# Загальна функція для пошуку записів по імені або номеру.
+# Використовується для роботи функцій з пошуку або редагування запису
+def find_records(user_data, true_false_result=False) -> list | bool:
+
+    matches_list = []
+    is_phone = False
+
+    if len(user_data) == 2:
+        user_data[1] = reset_phone_format(user_data[1])
+    else:
+
+        # Якщо переданий у функцію параметр є номером телефону...
+        if len(reset_phone_format(user_data[0])) == 12:
+
+            user_data[0] = reset_phone_format(user_data[0])
+            # ...то далі нам треба буде шукати в довіднику серед номерів
+            is_phone = True
+
+    j = user_data[0]
+
+    for key, value in phones.items():
+        if is_phone:
+            # шукаємо серед номерів
+            i = value
+        else:
+            # шукаємо серед імен
+            i = key
+        if str(i).lower() == str(j).lower():
+            matches_list.append(f"{key:<10} {restore_phone_format(value)}")
+
+    if len(matches_list) == 0:
+        return False
+    else:
+        return true_false_result or matches_list
 
 
 @input_error
@@ -135,13 +135,11 @@ def find_phone_record(user_data=None) -> list:
 
     if not check_params(user_data):
         raise TypeError("NoSuchRecord")
-        # return [*user_data, False]                  # тут щось зробити
     
     result = find_records(user_data[1:])
 
     if result == False:
         raise TypeError("NoSuchRecord")
-        # return [user_data[0], user_data[1], False]   # тут щось зробити
     
     return [user_data[0], result, user_data[1]]
 
@@ -179,7 +177,33 @@ def main() -> None:
             else:
                 command_result = user_data
 
-        show_message(command_result)
+        command = command_result[0]
+
+        if command == False:
+            msg = error_list[command_result[1]] + "\nCheck your data and repeat or type 'help' for help."
+
+        else:
+
+            match command:
+
+                case "add" | "change" | "delete":
+                    msg = f"Record ({command_result[1][0]}: {restore_phone_format(command_result[1][1])}) was {success_list[command]} successfully."
+
+                case "help" | "hello" | "phone" | "showall" | "." | "close" | "exit" | "goodbye" | "quit":
+
+                    if isinstance(command_result[1], list):
+
+                        msg = success_list[command]
+
+                        for i in command_result[1]:
+                            msg += i + "\n"
+                            
+                        msg = msg[:-1]
+
+                    else:
+                        msg = command_result[1]
+
+        print(msg)
 
         if command in (".", "close", "exit", "goodbye", "quit"):
             quit()
@@ -223,35 +247,6 @@ def show_all_phone_records(user_data=None) -> list:
         raise TypeError("PhoneListIsEmpty")
     
     return [user_data[0], result]
-
-
-def show_message(command_result) -> None:
-
-    command = command_result[0]
-
-    if command == False:
-        msg = error_list[command_result[1]] + "\nCheck your data and repeat or type 'help' for help."
-
-    else:
-
-        match command:
-
-            case "add" | "change" | "delete":
-                msg = f"Record ({command_result[1][0]}: {restore_phone_format(command_result[1][1])}) was {success_list[command]} successfully."
-
-            case "help" | "hello" | "phone" | "showall" | "." | "close" | "exit" | "goodbye" | "quit":
-
-                if isinstance(command_result[1], list):
-
-                    msg = success_list[command]
-                    for i in command_result[1]:
-                        msg += i + "\n"
-                    msg = msg[:-1]
-
-                else:
-                    msg = command_result[1]
-
-    print(msg)
 
 
 def show_help(user_data=None) -> str:
@@ -302,8 +297,8 @@ error_list = {
     "WrongPhone": "Wrong phone. It must contain 12 digits.",
     "RecordAlreadyExists": "Record with such username already exists.",
     "WrongUserName": "Wrong user name. It cannot consist solely of numbers.",
-    "PhoneListIsEmpty": "Phone list is empty. Add at least 1 record.",
-    "NoSuchRecord": "No such record.",
+    "PhoneListIsEmpty": "Phone list is empty.",
+    "NoSuchRecord": "No such record(s).",
     "WrongRecordNumber": "Wrong record number.",
     "EmptyInput": "Empty input.",
     "NotAValidCommand": "Not a valid command."
@@ -313,7 +308,7 @@ success_list = {
     "add": "added",
     "change": "changed",
     "delete": "deleted",
-    "phone": "Records that match your query:\n",
+    "phone": "Record(s) that match your query:\n",
     "showall": "All records in the phone book:\n"
 }
 
