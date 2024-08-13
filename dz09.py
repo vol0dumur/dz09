@@ -177,13 +177,15 @@ def main() -> None:
             else:
                 command_result = user_data
 
+        # Готуємо повідомлення для користувача за результатами виконання команди
         command = command_result[0]
 
         if command == False:
-            msg = error_list[command_result[1]] + "\nCheck your data and repeat or type 'help' for help."
+            # Якщо була помилка - беремо текст з словника
+            msg = errors_list[command_result[1]] + "\nCheck your data and repeat or type 'help' for help."
 
         else:
-
+            # При успішному виконанні в залежності від команди формуємо повідомлення
             match command:
 
                 case "add" | "change" | "delete":
@@ -203,6 +205,7 @@ def main() -> None:
                     else:
                         msg = command_result[1]
 
+        # Друкуємо повідомлення
         print(msg)
 
         if command in (".", "close", "exit", "goodbye", "quit"):
@@ -291,7 +294,7 @@ commands = {
     ".": (quit_bot, 1)
 }
 
-error_list = {
+errors_list = {
     "TooManyParameters": "Too many parameters.",
     "TooFewParameters": "Too few parameters.",
     "WrongPhone": "Wrong phone. It must contain 12 digits.",
